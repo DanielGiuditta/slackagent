@@ -1,0 +1,41 @@
+:root {
+  /* ─── Layout ─── */
+  --rail-w: 68px;
+  --sidebar-w: 260px;
+  --topbar-h: 49px;
+  --thread-w: 400px;
+  --composer-h: 68px;
+
+  /* ─── Spacing Scale ─── */
+  --s0: 2px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+
+  /* ─── Typography ─── */
+  --font-base: 15px;
+  --font-small: 13px;
+  --font-large: 18px;
+  --lh-base: 1.46667;
+  --lh-tight: 1.2;
+
+  /* ─── Colors (Slack Light) ─── */
+  --bg: #ffffff;
+  --surface: #f8f8f8;
+  --border: #dddddd;
+  --text: #1d1c1d;
+  --muted: #616061;
+  --sidebar-bg: #3f0e40;
+  --sidebar-hover: #350d36;
+  --sidebar-active: #1164a3;
+  --bot-badge: #4a154b;
+  --link: #1264a3;
+  --success: #007a5a;
+
+  /* ─── Radius ─── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Overlay Test</title>
+  <script>
+    async function testOverlay() {
+      const output = document.getElementById('output');
+      
+      try {
+        // Fetch the page
+        const response = await fetch('http://localhost:5001');
+        const html = await response.text();
+        
+        output.innerHTML = '<h3>Page loaded successfully</h3>';
+        
+        // Open the page in a new window for manual testing
+        const win = window.open('http://localhost:5001', '_blank');
+        
+        // After a delay, inject a test script
+        setTimeout(() => {
+          if (win) {
+            output.innerHTML += '<p>Please check the opened window and try clicking the Autopilot button.</p>';
+            output.innerHTML += '<p>Then run this in the browser console:</p>';
+            output.innerHTML += '<pre style="background: #f5f5f5; padding: 10px; border-radius: 5px;">';
+            output.innerHTML += `// Check for overlay elements
+const overlays = Array.from(document.querySelectorAll('.fixed, [style*="position: fixed"]'));
+console.log('Fixed elements:', overlays);
+
+// Check if DevPanel is open
+const devPanel = overlays.find(el => el.textContent.includes('Dev Panel'));
+console.log('DevPanel open:', !!devPanel);
+
+// Find Autopilot button
+const autopilotBtn = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Autopilot'));
+console.log('Autopilot button:', autopilotBtn);
+
+// Check what element is at the button's position
+if (autopilotBtn) {
+  const rect = autopilotBtn.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const elementAtPoint = document.elementFromPoint(centerX, centerY);
+  console.log('Element at button center:', elementAtPoint);
+  console.log('Is button clickable:', elementAtPoint === autopilotBtn || autopilotBtn.contains(elementAtPoint));
+  
+  if (elementAtPoint !== autopilotBtn && !autopilotBtn.contains(elementAtPoint)) {
+    console.log('BLOCKING ELEMENT:', {
+      tag: elementAtPoint.tagName,
+      className: elementAtPoint.className,
+      id: elementAtPoint.id,
+      zIndex: window.getComputedStyle(elementAtPoint).zIndex,
+      position: window.getComputedStyle(elementAtPoint).position
+    });
+  }
+}`;
+            output.innerHTML += '</pre>';
+          }
+        }, 1000);
+        
+      } catch (error) {
+        output.innerHTML = '<h3 style="color: red;">Error: ' + error.message + '</h3>';
+        output.innerHTML += '<p>Make sure the dev server is running on http://localhost:5001</p>';
+      }
+    }
+  </script>
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h1>Overlay Test for Slack Demo</h1>
+  <button onclick="testOverlay()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
+    Test Overlay
+  </button>
+  <div id="output" style="margin-top: 20px;"></div>
+</body>
+</html>

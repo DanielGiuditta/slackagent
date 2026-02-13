@@ -1,0 +1,118 @@
+@import url('./styles/tokens.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: var(--font-base);
+  line-height: var(--lh-base);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ─── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* ─── Placeholders ─── */
+
+textarea::placeholder,
+input::placeholder {
+  color: var(--muted);
+}
+
+.agent-star-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.agent-star-avatar__blue,
+.agent-star-avatar__rainbow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transition: opacity 260ms ease;
+}
+
+.agent-star-avatar__blue {
+  background: var(--sidebar-active);
+  opacity: 1;
+}
+
+.agent-star-avatar__rainbow {
+  inset: -45%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    #ff5f6d 0deg,
+    #ffc371 60deg,
+    #ffe866 120deg,
+    #4dd2ff 180deg,
+    #7c6cff 240deg,
+    #ff7ab8 300deg,
+    #ff5f6d 360deg
+  );
+  opacity: 0;
+}
+
+.agent-star-avatar__glyph {
+  position: relative;
+  z-index: 1;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.agent-star-avatar.is-running .agent-star-avatar__rainbow {
+  opacity: 1;
+  will-change: transform;
+  animation: agent-star-avatar-spin 1.25s linear infinite;
+}
+
+.agent-star-avatar.is-running .agent-star-avatar__blue {
+  opacity: 0;
+}
+
+@keyframes agent-star-avatar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-star-avatar.is-running .agent-star-avatar__rainbow {
+    animation: none;
+  }
+}
