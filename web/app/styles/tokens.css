@@ -28,6 +28,8 @@
   --border: #dddddd;
   --text: #1d1c1d;
   --muted: #616061;
+  /* Rail is darker; sidebar panel is slightly lighter. */
+  --rail-bg: #2c0b2d;
   --sidebar-bg: #3f0e40;
   --sidebar-hover: #350d36;
   --sidebar-active: #1164a3;

@@ -48,6 +48,8 @@ export function MessageRow({
   const openThread = useStore((s) => s.openThread);
   const openRunCanvas = useStore((s) => s.openRunCanvas);
   const runs = useStore((s) => s.runs);
+  const canvases = useStore((s) => s.canvases);
+  const autopilots = useStore((s) => s.autopilots);
   const getUserProfile = useStore((s) => s.getUserProfile);
   const profile = getUserProfile(message.userId);
   const [avatarFailed, setAvatarFailed] = useState(false);
@@ -62,12 +64,38 @@ export function MessageRow({
   const opensThreadFromRow = !isThreadView && (isRunRow || message.kind === 'deliverable');
   const threadRootId = isRunRow ? message.id : message.threadRootId || message.parentId || message.id;
 
+  const resolveCanvasTarget = (preferredTargetId?: string) => {
+    if (preferredTargetId && (runs[preferredTargetId] || canvases[preferredTargetId])) {
+      return preferredTargetId;
+    }
+    if (message.runId && (runs[message.runId] || canvases[message.runId])) {
+      return message.runId;
+    }
+    if (message.autopilotId) {
+      const autopilotCanvasId = autopilots[message.autopilotId]?.canvasId;
+      if (autopilotCanvasId && canvases[autopilotCanvasId]) {
+        return autopilotCanvasId;
+      }
+    }
+    if (run?.id) return run.id;
+    return undefined;
+  };
+
   const openDeliverableArtifact = () => {
     if (message.kind !== 'deliverable') return;
     const links = message.artifactLinks || [];
     const canvasTarget = links.find((link) => link.targetId)?.targetId;
     if (canvasTarget) {
-      openRunCanvas(canvasTarget);
+      const resolved = resolveCanvasTarget(canvasTarget);
+      if (resolved) {
+        openRunCanvas(resolved);
+        return;
+      }
+    }
+
+    const fallbackTarget = resolveCanvasTarget();
+    if (fallbackTarget) {
+      openRunCanvas(fallbackTarget);
       return;
     }
 
@@ -83,9 +111,7 @@ export function MessageRow({
       return;
     }
 
-    if (run) {
-      openRunCanvas(run.id);
-    }
+    // Nothing resolvable: no-op instead of opening unrelated surfaces.
   };
 
   useEffect(() => {
@@ -211,8 +237,9 @@ export function MessageRow({
                         key={`${message.id}-artifact-${idx}`}
                         onClick={(event) => {
                           event.stopPropagation();
-                          if (link.targetId) {
-                            openRunCanvas(link.targetId);
+                          const resolved = resolveCanvasTarget(link.targetId);
+                          if (resolved) {
+                            openRunCanvas(resolved);
                           }
                         }}
                         style={{

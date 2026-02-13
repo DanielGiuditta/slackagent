@@ -17,6 +17,8 @@ export function AutopilotPreviewSheet({ draft, mode = 'create', autopilotId, onC
   const channels = useStore((s) => s.channels);
   const createAutopilot = useStore((s) => s.createAutopilot);
   const updateAutopilot = useStore((s) => s.updateAutopilot);
+  const setActiveView = useStore((s) => s.setActiveView);
+  const setAutopilotEditorId = useStore((s) => s.setAutopilotEditorId);
 
   const save = async () => {
     setSaving(true);
@@ -24,7 +26,11 @@ export function AutopilotPreviewSheet({ draft, mode = 'create', autopilotId, onC
       if (mode === 'edit' && autopilotId) {
         updateAutopilot(autopilotId, model);
       } else {
-        createAutopilot(model);
+        const created = createAutopilot(model);
+        // Creating from composer should surface the new module in App Home immediately.
+        setActiveView('app_home');
+        // Open the newly created module so it is visible and confirmed.
+        setAutopilotEditorId(created.id);
       }
       onClose();
     } finally {

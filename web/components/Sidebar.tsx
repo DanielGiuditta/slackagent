@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useStore } from '@/lib/store';
 
-type SidebarViewId = 'replies' | 'runs' | 'app_home' | 'huddles';
+type SidebarViewId = 'replies' | 'runs' | 'app_home';
 
 export function Sidebar() {
   const channels = useStore((s) => s.channels);
@@ -16,7 +16,6 @@ export function Sidebar() {
 
   const viewItems: Array<{ id: SidebarViewId; label: string; icon: ReactNode }> = [
     { id: 'replies', label: 'Replies', icon: <RepliesIcon /> },
-    { id: 'huddles', label: 'Huddles', icon: <HuddlesIcon /> },
     { id: 'runs', label: 'Runs', icon: '▶' },
     { id: 'app_home', label: 'Autopilot', icon: '✦' },
   ];
@@ -41,6 +40,50 @@ export function Sidebar() {
 
       {/* Channel list */}
       <nav className="flex-1 px-2 py-3">
+        {/* Search (layout only) */}
+        <div style={{ padding: '0 var(--s2)', marginBottom: 'var(--s3)' }}>
+          <div style={{ position: 'relative' }}>
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '16px',
+                pointerEvents: 'none',
+              }}
+            >
+              ⌕
+            </span>
+            <input
+              type="text"
+              placeholder="Search"
+              aria-label="Search"
+              spellCheck={false}
+              className="sidebar-search"
+              style={{
+                width: '100%',
+                height: '30px',
+                padding: '0 10px 0 28px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'rgba(255,255,255,0.08)',
+                color: '#fff',
+                outline: 'none',
+                fontSize: '13px',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.10)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+              }}
+            />
+          </div>
+        </div>
+
         <div
           className="uppercase tracking-wider font-semibold px-2 mb-1"
           style={{
@@ -198,22 +241,4 @@ function RepliesIcon() {
   );
 }
 
-function HuddlesIcon() {
-  return (
-    <svg
-      width="1em"
-      height="1em"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5.5 10V9.25a4.5 4.5 0 0 1 9 0V10" />
-      <path d="M4.5 10.25a1.6 1.6 0 0 1 3.2 0v3.25a1.6 1.6 0 0 1-3.2 0v-3.25Z" />
-      <path d="M12.3 10.25a1.6 1.6 0 0 1 3.2 0v3.25a1.6 1.6 0 0 1-3.2 0v-3.25Z" />
-    </svg>
-  );
-}
+// (Huddles removed from nav)

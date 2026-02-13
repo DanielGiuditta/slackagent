@@ -16,9 +16,7 @@ export function Topbar() {
         ? 'Replies'
       : activeView === 'runs'
         ? 'Runs'
-        : activeView === 'huddles'
-          ? 'Huddles'
-          : '✦ Autopilot';
+        : '✦ Autopilot';
 
   return (
     <header

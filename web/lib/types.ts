@@ -124,9 +124,13 @@ export interface Cadence {
 export interface Autopilot {
   id: string;
   name: string;
+  instruction: string;
   cadenceText: string;
   destinationType: 'dm' | 'channel';
   destinationId: string;
+  scope: ScopeChips;
+  tools: ToolToggles;
+  outputFormat: OutputFormat;
   outputMode: 'threadRuns' | 'canvasPrimary';
   canvasId?: string;
   isPaused: boolean;

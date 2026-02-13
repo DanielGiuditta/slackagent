@@ -14,7 +14,7 @@ import type {
   UserProfile,
 } from './types';
 
-type ViewMode = 'channel' | 'replies' | 'runs' | 'app_home' | 'huddles';
+type ViewMode = 'channel' | 'replies' | 'runs' | 'app_home';
 
 interface SlackStore {
   /* ─── State ─── */
@@ -153,6 +153,7 @@ const seedChannels: Channel[] = [
   { id: 'eng-risk', name: 'eng-risk', type: 'channel' },
   { id: 'product-payments', name: 'product-payments', type: 'channel' },
   { id: 'design-systems', name: 'design-systems', type: 'channel' },
+  { id: 'design-requests', name: 'design-requests', type: 'channel' },
   { id: 'support-escalations', name: 'support-escalations', type: 'channel' },
   { id: 'sales-enterprise', name: 'sales-enterprise', type: 'channel' },
   { id: 'fraud-watch', name: 'fraud-watch', type: 'channel' },
@@ -310,6 +311,39 @@ function buildSeedMessages(): Message[] {
     ['you', 'Looks good. Can we include hover + disabled states in spec?'],
     ['chloe-wu', 'Done, added all states and mobile tap behavior details.'],
     ['victor-hale', 'Thanks team, this unblocks enterprise onboarding polish.'],
+  ]);
+
+  addScript('design-requests', 574, 4, [
+    ['nina-kapoor', 'Request: redesign dispute center so finance teams can bulk-review chargebacks by reason code.'],
+    ['chloe-wu', 'I can mock a split view with timeline + evidence drawer. Need API constraints from eng-risk.'],
+    ['hannah-yu', 'Customer ask: clearer payout status labels ("processing", "scheduled", "on hold") with tooltips.'],
+    ['you', 'Feature request: add downloadable remittance PDF from payout detail page for enterprise AP teams.'],
+    ['jules-bennett', 'Prospect feedback: approval flows need dual-control for refunds over $25k.'],
+    ['emma-ross', 'Please include compliance-safe copy for sanctions review and manual hold states.'],
+    ['alex-park', 'If we add dual-control, we need approver context panel with risk signal + account history.'],
+    ['chloe-wu', 'Design request noted: mobile admin view for emergency card freeze is currently too deep.'],
+    ['maya-chen', 'Prioritize anything that reduces support tickets during payout delays and dispute spikes.'],
+    ['you', 'Let us scope this into: quick wins (labels/tooltips) and v2 (bulk actions + dual-control).'],
+  ]);
+
+  addScript('design-requests', 268, 4, [
+    ['daniel-kim', 'Feature request from marketing: reusable trust badges component for checkout and account settings.'],
+    ['chloe-wu', 'I can ship badge variants (insured funds, same-day payouts, dispute protection) with content slots.'],
+    ['isabel-mora', 'Onboarding request: show integration progress as a checklist with owner avatars for enterprise admins.'],
+    ['you', 'Design ask: add "what changed" diff in payout run retries so ops can audit before approving.'],
+    ['emma-ross', 'Risk needs explicit warning patterns when users lower fraud thresholds below policy minimums.'],
+    ['alex-park', 'We can expose threshold deltas + projected approval lift in API for that warning panel.'],
+    ['hannah-yu', 'Top support request: dispute timeline should show who acted and when, not just status changes.'],
+    ['nina-kapoor', 'Please add this to next sprint candidate list with impact estimates.'],
+  ]);
+
+  addScript('design-requests', 112, 3, [
+    ['jules-bennett', 'Enterprise request from Crescent: dark mode for operations dashboard during overnight monitoring.'],
+    ['chloe-wu', 'Design can support dark theme tokens, but we need data-visualization contrast checks first.'],
+    ['you', 'Feature request: one-click "send status update" from incident panel with prefilled customer-safe copy.'],
+    ['grace-lin', 'Yes please — this would cut support response time during payout incidents.'],
+    ['nina-kapoor', 'Let us prioritize status-update composer + dispute timeline improvements for this cycle.'],
+    ['maya-chen', 'Agree. Ship the parts that reduce ambiguity for operators first.'],
   ]);
 
   addScript('support-escalations', 560, 4, [
@@ -1440,9 +1474,13 @@ const seedAutopilots: Record<string, Autopilot> = {
   'autopilot-daily-meeting-prep': {
     id: 'autopilot-daily-meeting-prep',
     name: 'Daily meeting prep',
+    instruction: 'Create a to-do list and briefing from this chat only.',
     cadenceText: 'Weekdays at 8:00 AM PT',
     destinationType: 'dm',
     destinationId: 'dm-agent',
+    scope: { channel: true, thread: false, messages: [], files: [], people: [] },
+    tools: { drive: false, calendar: true, codebase: false },
+    outputFormat: 'brief',
     outputMode: 'threadRuns',
     isPaused: false,
     lastRunAt: now - 82 * 60_000,
@@ -1450,9 +1488,13 @@ const seedAutopilots: Record<string, Autopilot> = {
   'autopilot-daily-focus-brief': {
     id: 'autopilot-daily-focus-brief',
     name: 'Daily focus brief',
+    instruction: 'Summarize focus areas and action items from this chat only.',
     cadenceText: 'Daily at 9:30 AM PT',
     destinationType: 'dm',
     destinationId: 'dm-agent',
+    scope: { channel: true, thread: false, messages: [], files: [], people: [] },
+    tools: { drive: false, calendar: false, codebase: true },
+    outputFormat: 'brief',
     outputMode: 'threadRuns',
     isPaused: false,
     lastRunAt: now - 26 * 60_000,
@@ -1460,9 +1502,13 @@ const seedAutopilots: Record<string, Autopilot> = {
   'autopilot-industry-trends': {
     id: 'autopilot-industry-trends',
     name: 'Industry trends',
+    instruction: 'Produce a short trends brief from this chat context.',
     cadenceText: 'Weekdays at 11:00 AM PT',
     destinationType: 'dm',
     destinationId: 'dm-agent',
+    scope: { channel: true, thread: false, messages: [], files: [], people: [] },
+    tools: { drive: true, calendar: false, codebase: false },
+    outputFormat: 'doc',
     outputMode: 'canvasPrimary',
     canvasId: 'canvas-industry-trends',
     isPaused: false,
@@ -1471,9 +1517,13 @@ const seedAutopilots: Record<string, Autopilot> = {
   'autopilot-team-metrics-dashboard': {
     id: 'autopilot-team-metrics-dashboard',
     name: 'Team metrics dashboard',
+    instruction: 'Generate team metrics and risks based on this channel context.',
     cadenceText: 'Daily at 4:00 PM PT',
     destinationType: 'channel',
     destinationId: 'eng',
+    scope: { channel: true, thread: false, messages: [], files: [], people: [] },
+    tools: { drive: true, calendar: false, codebase: true },
+    outputFormat: 'doc',
     outputMode: 'canvasPrimary',
     canvasId: 'canvas-team-metrics-dashboard',
     isPaused: false,
@@ -1482,9 +1532,13 @@ const seedAutopilots: Record<string, Autopilot> = {
   'autopilot-decision-driver': {
     id: 'autopilot-decision-driver',
     name: 'Decision Driver',
+    instruction: 'Identify one decision needed from this chat and propose next actions.',
     cadenceText: 'Weekdays at 10:15 AM PT',
     destinationType: 'dm',
     destinationId: 'dm-agent',
+    scope: { channel: true, thread: false, messages: [], files: [], people: [] },
+    tools: { drive: false, calendar: false, codebase: true },
+    outputFormat: 'brief',
     outputMode: 'threadRuns',
     isPaused: false,
     lastRunAt: now - 61 * 60_000,
@@ -1492,9 +1546,13 @@ const seedAutopilots: Record<string, Autopilot> = {
   'autopilot-loop-closer': {
     id: 'autopilot-loop-closer',
     name: 'Loop Closer',
+    instruction: 'Find unresolved loops from this chat and draft concise follow-ups.',
     cadenceText: 'Weekdays at 1:00 PM PT',
     destinationType: 'dm',
     destinationId: 'dm-agent',
+    scope: { channel: true, thread: false, messages: [], files: [], people: [] },
+    tools: { drive: false, calendar: false, codebase: true },
+    outputFormat: 'brief',
     outputMode: 'threadRuns',
     isPaused: false,
     lastRunAt: now - 14 * 60_000,
@@ -1502,9 +1560,13 @@ const seedAutopilots: Record<string, Autopilot> = {
   'autopilot-early-warning': {
     id: 'autopilot-early-warning',
     name: 'Early Warning',
+    instruction: 'Surface early warning signals from this chat and suggest escalation copy.',
     cadenceText: 'Every 2 hours',
     destinationType: 'dm',
     destinationId: 'dm-agent',
+    scope: { channel: true, thread: false, messages: [], files: [], people: [] },
+    tools: { drive: false, calendar: false, codebase: true },
+    outputFormat: 'brief',
     outputMode: 'threadRuns',
     isPaused: false,
     lastRunAt: now - 60_000,
@@ -1660,20 +1722,36 @@ function buildDecisionDriverDeliverable(state: Pick<SlackStore, 'messages'>): Au
     textIncludes: 'Canary health green after queue shard rebalance',
   });
   const title = 'Decision Driver';
-  const body = [
-    '### Decision',
-    'Default payout circuit-breaker retries to **3** today.',
-    '',
-    '### Action items',
-    '- Confirm monitoring owner for threshold checks.',
-    '- Lock rollback trigger before next release gate.',
-    '',
-    '### Follow-up',
-    '- Run checkpoints at +24h and +48h on tail latency and error budget.',
-    '',
-    '### Draft message to post in #eng-platform',
-    '`@Alex Park @Priya Iyer @Mateo Cruz defaulting retries to 3 today. Please confirm threshold owner + rollback trigger in-thread before release gate.`',
-  ].join('\n');
+  const body = `# Decision Driver
+
+## ⚡ Decision needed today: How should payouts behave when a bank hiccups?
+
+**Why you should care:** This choice changes what customers experience. If we get it wrong, we create support tickets and confusion during launch week.
+
+### ✅ Proposed decision
+**Auto-retry a failed payout up to _3 times_** before showing "Failed."
+
+### What this means in plain English
+- More payouts will succeed automatically (fewer false failures).
+- Some payouts may stay **Pending** a bit longer before we confirm "Failed."
+
+### What you need to do next (2 minutes)
+1) **Pick an owner** to watch customer impact after we ship
+   _Who is watching "pending too long" and "payout failed" volume?_
+2) **Confirm a rollback rule**
+   _What metric tells us to revert, and who does it?_
+
+### If we do not decide today
+We ship with inconsistent behavior and end up debating during an incident window.
+
+### Copy/paste message to send
+> **To:** #eng-platform
+> @Alex Park @Priya Iyer @Mateo Cruz
+> Proposal: set payout auto-retries to **3** so temporary bank issues recover automatically.
+> Before release gate, can we confirm:
+> 1) who owns monitoring for **payout pending/delay**, and
+> 2) the rollback trigger (metric + threshold + owner)?
+> If no objections by **2pm**, I will record this as the decision.`;
   return { title, body, receipts: [] };
 }
 
@@ -1698,23 +1776,49 @@ function buildLoopCloserDeliverable(state: Pick<SlackStore, 'messages'>): Autopi
     textIncludes: 'Please include customer comms timeline in final postmortem',
   });
   const title = 'Loop Closer';
-  const body = [
-    '### Priority follow-ups',
-    '### 1) dm-priya',
-    '- **Draft reply:** `Sharing launch copy now with staged availability language so legal can review on time.`',
-    '',
-    '### 2) dm-jules',
-    '- **Draft reply:** `Sending Redwood talk track now with proof points and concession guardrails for the call.`',
-    '',
-    '### 3) dm-isabel',
-    '- **Draft reply:** `Draft timeline attached with milestones, dependencies, and owners for sponsor review.`',
-    '',
-    '### Follow-up',
-    '- Confirm all three threads are closed before end of day.',
-    quietRiskMsg ? '- Ensure postmortem comms timeline is included in incident follow-through.' : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const quietRiskSection = quietRiskMsg
+    ? '\n\n## One thing you might miss today\n**Postmortem comms timeline** still has no owner. If it slips, it will resurface in leadership review.'
+    : '';
+  const body = `# Loop Closer
+
+## ✅ 3 loops to close before they turn into pings
+
+**Why you should care:** These are small replies that prevent big headaches. Closing them now avoids last-minute churn, missed approvals, and awkward follow-ups.
+
+### 1) Launch copy -> Legal review
+**Why it matters:** If Legal does not review today, launch wording becomes a blocker.
+
+**Do this:** Send the updated copy and ask for one Legal owner + a deadline.
+
+> **To:** dm-priya
+> I shared the updated launch copy with staged availability language.
+> Who is the **Legal owner** for sign-off, and can they review by **2pm**?
+> If helpful, I can summarize the changes in 3 bullets.
+
+---
+
+### 2) Redwood call prep (Sales)
+**Why it matters:** Without guardrails, we risk over-promising on pricing/SLAs in the meeting.
+
+**Do this:** Send the talk track and offer to join briefly.
+
+> **To:** dm-jules
+> Talk track is ready: proof points + concession guardrails + one clear "we cannot commit to that yet."
+> Want me to join the first **10 minutes** of the Redwood call to help steer pricing questions?
+
+---
+
+### 3) Sponsor timeline draft
+**Why it matters:** Sponsors will push back if dependencies and owners are not explicit.
+
+**Do this:** Send the draft and ask them to confirm critical path + comms owner.
+
+> **To:** dm-isabel
+> Draft timeline attached (milestones + owners + dependencies).
+> Can you confirm (1) the **critical path** and (2) who owns **comms if we slip**?
+> Happy to convert this into a 1-page weekly status template.
+
+---${quietRiskSection}`;
   return { title, body, receipts: [] };
 }
 
@@ -1736,22 +1840,34 @@ function buildEarlyWarningDeliverable(state: Pick<SlackStore, 'messages'>): Auto
     textIncludes: 'webhook retry issues',
   });
   const title = 'Early Warning';
-  const body = [
-    '### Risk signal',
-    '- Webhook retry pressure appears to be rising again across ops signals.',
-    '',
-    '### Immediate checks',
-    '- Validate queue depth by shard.',
-    '- Compare retry-storm indicators vs baseline.',
-    '- Confirm canary latency remains within guardrails.',
-    '',
-    '### Follow-up',
-    '- If elevated for 2 hours, open Sev2 and assign incident owner.',
-    '',
-    '### Draft messages',
-    '- **#incident-response:** `Quick validation ask: retry traffic appears elevated again. Who owns next 2h checkpoint and queue-depth snapshot?`',
-    '- **#support-escalations:** `Heads-up: possible retry pressure returning. Please prepare customer-safe macro and ETA language.`',
-  ].join('\n');
+  const body = `# Early Warning
+
+## 🚨 Early warning: Customers may see delayed payment updates (not an incident yet)
+
+**Why you should care:** When updates arrive late, customers see "pending" longer, dashboards look wrong, and support volume spikes fast. This is the moment to prevent escalation.
+
+### What I am seeing (plain English)
+A few signals suggest our **payment status notifications** may be slowing down again.
+
+### What to do in the next 60-90 minutes
+1) **Backlog check:** Are notifications queueing up?
+2) **Repeat-send check:** Are we re-sending the same updates more than usual?
+3) **Customer impact check:** Are delivery times trending up vs earlier today?
+
+### Copy/paste messages (do not auto-send)
+
+> **To:** #incident-response
+> Heads-up: we may be trending toward delayed payment status updates again.
+> Can someone grab (1) backlog snapshot + (2) delivery delay trend in the next 60-90 min and report back?
+> If it is worsening, we should decide early whether to open a Sev2.
+
+> **To:** #support-escalations
+> Potential early warning: payment status updates may lag if today's trend continues.
+> Can we prep a customer-safe macro ("We are investigating delayed updates; next update in 60 minutes")?
+> No outbound messaging unless we confirm impact.
+
+### Escalation rule (simple)
+If delays keep rising for **2 hours** or tickets cluster around "status stuck," open a Sev2 and assign an owner.`;
   return { title, body, receipts: [] };
 }
 
@@ -1886,7 +2002,15 @@ export const useStore = create<SlackStore>((set, get) => ({
       if (existing && shouldIgnoreStaleRunUpdate(existing, run)) {
         return {};
       }
-      const runs = { ...s.runs, [run.id]: run };
+      const mergedRun: Run =
+        existing && !run.autopilotId && existing.autopilotId
+          ? {
+              ...run,
+              // Preserve local autopilot linkage when server/websocket payload omits it.
+              autopilotId: existing.autopilotId,
+            }
+          : run;
+      const runs = { ...s.runs, [mergedRun.id]: mergedRun };
       const rows = Object.values(runs)
         .sort((a, b) => b.createdAt - a.createdAt)
         .map(({ id, title, status, progressPct, latestUpdate, createdAt }) => ({
@@ -2122,10 +2246,35 @@ export const useStore = create<SlackStore>((set, get) => ({
     }
 
     const optimisticRootId = optimistic.rootMessageId;
+    const normalizedRun: Run = {
+      ...optimistic,
+      ...serverRun,
+      id: serverRun.id,
+      container: serverRun.container || optimistic.container,
+      rootMessageId: serverRun.rootMessageId || optimistic.rootMessageId,
+      threadId: serverRun.threadId || serverRun.rootMessageId || optimistic.rootMessageId,
+      artifacts: serverRun.artifacts?.length ? serverRun.artifacts : optimistic.artifacts,
+      requestedText: serverRun.requestedText ?? optimistic.requestedText,
+      stepTotal:
+        serverRun.stepTotal ??
+        optimistic.stepTotal ??
+        (serverRun.status === 'completed' ? 1 : undefined),
+      stepCurrent:
+        serverRun.stepCurrent ??
+        optimistic.stepCurrent ??
+        (serverRun.status === 'completed' ? 1 : undefined),
+      progressPct:
+        typeof serverRun.progressPct === 'number'
+          ? serverRun.progressPct
+          : optimistic.progressPct,
+      latestUpdate: serverRun.latestUpdate || optimistic.latestUpdate,
+    };
+    const serverPlan = (serverRun as Run & { plan?: { summary?: string } }).plan;
+
     set((s) => {
       const nextRuns = { ...s.runs };
       delete nextRuns[optimisticRunId];
-      nextRuns[serverRun.id] = serverRun;
+      nextRuns[normalizedRun.id] = normalizedRun;
 
       const strippedMessages = s.messages.filter((message) => {
         if (message.id === optimisticRootId) return false;
@@ -2134,19 +2283,47 @@ export const useStore = create<SlackStore>((set, get) => ({
         return true;
       });
 
-      const hasServerRootMessage = strippedMessages.some((message) => message.id === serverRun.rootMessageId);
+      const hasServerRootMessage = strippedMessages.some((message) => message.id === normalizedRun.rootMessageId);
       const serverRootMessage: Message | null = hasServerRootMessage
         ? null
         : {
-            id: serverRun.rootMessageId,
-            channelId: serverRun.container.id,
+            id: normalizedRun.rootMessageId,
+            channelId: normalizedRun.container.id,
             userId: 'workspace-agent',
-            text: serverRun.title,
+            text: normalizedRun.title,
             ts: Date.now(),
             isBot: true,
             kind: 'run_card',
-            runId: serverRun.id,
+            runId: normalizedRun.id,
           };
+      const hasDeliverable = strippedMessages.some(
+        (message) => message.kind === 'deliverable' && message.runId === normalizedRun.id
+      );
+      const fallbackDeliverable: Message | null =
+        !hasDeliverable && typeof serverPlan?.summary === 'string' && serverPlan.summary.trim()
+          ? {
+              id: makeId('msg'),
+              channelId: normalizedRun.container.id,
+              containerId: normalizedRun.container.id,
+              threadRootId: normalizedRun.rootMessageId,
+              parentId: normalizedRun.rootMessageId,
+              userId: 'workspace-agent',
+              text: serverPlan.summary,
+              title: 'Deliverable',
+              body: serverPlan.summary,
+              artifactLinks: normalizedRun.artifacts
+                .filter((artifact) => artifact.type === 'canvas' || Boolean(artifact.url))
+                .map((artifact) => ({
+                  label: artifact.type === 'canvas' ? 'Open Canvas' : `Open ${artifact.type}: ${artifact.title}`,
+                  targetId: artifact.type === 'canvas' ? normalizedRun.id : undefined,
+                  url: artifact.url,
+                })),
+              ts: Date.now(),
+              isBot: true,
+              kind: 'deliverable',
+              runId: normalizedRun.id,
+            }
+          : null;
 
       const runsIndex = Object.values(nextRuns)
         .sort((a, b) => b.createdAt - a.createdAt)
@@ -2159,19 +2336,23 @@ export const useStore = create<SlackStore>((set, get) => ({
           createdAt,
         }));
 
-      const nextSelectedRunId = s.selectedRunId === optimisticRunId ? serverRun.id : s.selectedRunId;
+      const nextSelectedRunId = s.selectedRunId === optimisticRunId ? normalizedRun.id : s.selectedRunId;
       const nextActiveThreadRootId =
-        s.activeThreadRootId === optimisticRootId ? serverRun.rootMessageId : s.activeThreadRootId;
+        s.activeThreadRootId === optimisticRootId ? normalizedRun.rootMessageId : s.activeThreadRootId;
 
       return {
         runs: nextRuns,
         runsIndex,
         selectedRunId: nextSelectedRunId,
         activeThreadRootId: nextActiveThreadRootId,
-        messages: serverRootMessage ? [...strippedMessages, serverRootMessage] : strippedMessages,
+        messages: [
+          ...strippedMessages,
+          ...(serverRootMessage ? [serverRootMessage] : []),
+          ...(fallbackDeliverable ? [fallbackDeliverable] : []),
+        ],
       };
     });
-    return serverRun;
+    return normalizedRun;
   },
   discardRun: (runId) =>
     set((s) => {

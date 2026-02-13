@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type Keyboard
 import { useStore } from '@/lib/store';
 import { submitAgentCommand } from '@/lib/agentApi';
 import type { AgentCommand, Autopilot, OutputFormat, ToolToggles } from '@/lib/types';
-import { AutopilotPreviewSheet } from './AutopilotPreviewSheet';
 
 interface ComposerProps {
   parentId?: string;
@@ -40,6 +39,26 @@ function hasAgentAddressing(input: string) {
   );
 }
 
+function hasChannelOnlyIntent(input: string) {
+  return /\b(this channel|that channel|from this channel|from that channel|in this channel|in that channel|this chat|that chat|this thread|that thread|channel only|only this channel|only that channel)\b/i.test(
+    input
+  );
+}
+
+function inferAutopilotName(instruction: string, channelId: string, inThread: boolean) {
+  const normalized = instruction.trim().replace(/\s+/g, ' ');
+  const lower = normalized.toLowerCase();
+  if (/\b(to-?do|task list|action items?)\b/.test(lower)) {
+    return inThread ? 'Thread to-do list' : `To-do list from #${channelId}`;
+  }
+  if (/\b(summary|summarize|summarise|brief|recap|digest)\b/.test(lower)) {
+    return inThread ? 'Thread summary' : `Summary from #${channelId}`;
+  }
+  const compact = normalized.replace(/[.!?]+$/g, '');
+  if (!compact) return 'Autopilot';
+  return compact.length > 44 ? `${compact.slice(0, 41)}...` : compact;
+}
+
 export function Composer({ parentId }: ComposerProps) {
   const MAX_TEXTAREA_HEIGHT = 240;
   const MIN_TEXTAREA_HEIGHT = 24;
@@ -59,7 +78,7 @@ export function Composer({ parentId }: ComposerProps) {
     codebase: true,
   });
   const [toolsOpen, setToolsOpen] = useState(false);
-  const [autopilotPickerOpen, setAutopilotPickerOpen] = useState(false);
+  const [autopilotArmed, setAutopilotArmed] = useState(false);
   const [connectedApps, setConnectedApps] = useState({
     github: true,
     jira: true,
@@ -74,7 +93,6 @@ export function Composer({ parentId }: ComposerProps) {
     files: true,
     people: true,
   });
-  const [previewDraft, setPreviewDraft] = useState<Omit<Autopilot, 'id'> | null>(null);
   const [runStartedNotice, setRunStartedNotice] = useState<string | null>(null);
 
   const activeChannelId = useStore((s) => s.activeChannelId);
@@ -86,6 +104,9 @@ export function Composer({ parentId }: ComposerProps) {
   const setSelectedRunId = useStore((s) => s.setSelectedRunId);
   const setActiveView = useStore((s) => s.setActiveView);
   const createMessage = useStore((s) => s.createMessage);
+  const createAutopilot = useStore((s) => s.createAutopilot);
+  const updateAutopilot = useStore((s) => s.updateAutopilot);
+  const setAutopilotEditorId = useStore((s) => s.setAutopilotEditorId);
   const createRunFromCommand = useStore((s) => s.createRunFromCommand);
   const reconcileRunFromServer = useStore((s) => s.reconcileRunFromServer);
   const discardRun = useStore((s) => s.discardRun);
@@ -288,17 +309,45 @@ export function Composer({ parentId }: ComposerProps) {
   };
 
   const buildAutopilotDraft = (overrides?: Partial<Omit<Autopilot, 'id'>>): Omit<Autopilot, 'id'> => {
+    const baseInstruction = stripAgentAddressing(text.trim()) || 'Summarize important updates and action items.';
+    const channelOnlyIntent = hasChannelOnlyIntent(baseInstruction);
+    const scopedInstruction =
+      channelOnlyIntent && channelMeta?.type !== 'dm'
+        ? `Use only messages from channel #${activeChannelId}. Do not use context from any other channel or DM.\n\n${baseInstruction}`
+        : baseInstruction;
+    const inferredName = inferAutopilotName(baseInstruction, activeChannelId, Boolean(threadRun));
     return {
-      name: threadRun ? `${threadRun.title} repeat` : 'Recurring Agent task',
+      name: inferredName,
+      instruction: scopedInstruction,
       cadenceText: 'Weekdays at 9:00 AM PT',
       destinationType: channelMeta?.type === 'dm' ? 'dm' : 'channel',
       destinationId: activeChannelId,
+      scope: {
+        ...contextScope,
+        channel: channelOnlyIntent ? true : contextScope.channel,
+        thread: channelOnlyIntent ? false : contextScope.thread,
+      },
+      tools,
+      outputFormat,
       outputMode: outputFormat === 'doc' ? 'canvasPrimary' : 'threadRuns',
       canvasId: undefined,
       isPaused: false,
       lastRunAt: undefined,
       ...overrides,
     };
+  };
+
+  const inferCadenceTextFromInput = (input: string) => {
+    const textLower = input.toLowerCase();
+    const minuteMatch = textLower.match(/every\s+(\d+)\s+minute/);
+    if (minuteMatch) return `Every ${minuteMatch[1]} minutes`;
+    const hourMatch = textLower.match(/every\s+(\d+)\s+hour/);
+    if (hourMatch) return `Every ${hourMatch[1]} hours`;
+    if (/\bevery hour\b|\bhourly\b/.test(textLower)) return 'Every hour';
+    if (/\bweekday|weekdays\b/.test(textLower)) return 'Weekdays at 9:00 AM PT';
+    if (/\bweekly\b/.test(textLower)) return 'Weekly at 9:00 AM PT';
+    if (/\bdaily|every day|every morning\b/.test(textLower)) return 'Every day at 9:00 AM PT';
+    return 'On trigger (message match)';
   };
 
   const handleSend = async () => {
@@ -360,8 +409,86 @@ export function Composer({ parentId }: ComposerProps) {
 
     if (!baseCommand.text.trim()) return;
 
-    if (looksRepeating && baseCommand.text) {
-      setPreviewDraft(buildAutopilotDraft());
+    if (looksRepeating && baseCommand.text && autopilotArmed) {
+      const created = createAutopilot(
+        buildAutopilotDraft({
+          cadenceText: inferCadenceTextFromInput(baseCommand.text),
+        })
+      );
+      setAutopilotEditorId(created.id);
+      setActiveView('app_home');
+      setText('');
+      setAutopilotArmed(false);
+
+      const scopedMessages = messages
+        .filter(
+          (message) =>
+            message.channelId === created.destinationId &&
+            !message.parentId &&
+            message.kind === 'message' &&
+            !message.isBot
+        )
+        .sort((a, b) => a.ts - b.ts)
+        .slice(-20)
+        .map((message) => `${message.userId}: ${message.text}`);
+      const scopeGuard =
+        created.destinationType === 'channel'
+          ? `Scope constraint: use only channel #${created.destinationId}. Ignore references to other channels/DMs and do not include them in the output.`
+          : `Scope constraint: use only DM ${created.destinationId}. Do not use any other conversation.`;
+      const autopilotRunCommand: AgentCommand = {
+        text: `${scopeGuard}\n\n${created.instruction}`,
+        container: { type: created.destinationType, id: created.destinationId },
+        scope: created.scope,
+        tools: created.tools,
+        outputFormat: created.outputFormat,
+        requireApproval: false,
+        asAutopilot: true,
+        contextMessages: scopedMessages,
+      };
+
+      const optimisticAutopilotRun = createRunFromCommand(autopilotRunCommand);
+      useStore.setState((state) => ({
+        runs: state.runs[optimisticAutopilotRun.id]
+          ? {
+              ...state.runs,
+              [optimisticAutopilotRun.id]: {
+                ...state.runs[optimisticAutopilotRun.id],
+                autopilotId: created.id,
+              },
+            }
+          : state.runs,
+      }));
+
+      try {
+        const response = await submitAgentCommand(autopilotRunCommand);
+        const reconciled = reconcileRunFromServer(optimisticAutopilotRun.id, response.run);
+        useStore.setState((state) => ({
+          runs: state.runs[reconciled.id]
+            ? {
+                ...state.runs,
+                [reconciled.id]: {
+                  ...state.runs[reconciled.id],
+                  autopilotId: created.id,
+                },
+              }
+            : state.runs,
+          messages: state.messages.map((message) =>
+            message.kind === 'deliverable' && message.runId === reconciled.id && !message.autopilotId
+              ? { ...message, autopilotId: created.id }
+              : message
+          ),
+        }));
+        updateAutopilot(created.id, { lastRunAt: Date.now() });
+      } catch (error) {
+        discardRun(optimisticAutopilotRun.id);
+        const detail = error instanceof Error ? error.message : 'Agent backend unavailable';
+        createMessage({
+          channelId: created.destinationId,
+          userId: 'workspace-agent',
+          isBot: true,
+          text: `Autopilot run failed: ${detail}.`,
+        });
+      }
       return;
     }
 
@@ -466,8 +593,14 @@ export function Composer({ parentId }: ComposerProps) {
           }}
         >
           <span>Looks like a repeating request.</span>
-          <button onClick={() => setPreviewDraft(buildAutopilotDraft())} style={linkButtonStyle}>
-            Create Autopilot...
+          <button
+            onClick={() => {
+              setAutopilotArmed(true);
+              ensureAgentAddressingInComposer();
+            }}
+            style={linkButtonStyle}
+          >
+            Use Autopilot
           </button>
         </div>
       )}
@@ -648,43 +781,12 @@ export function Composer({ parentId }: ComposerProps) {
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1 flex-wrap">
                 <button
-                  style={autopilotPickerOpen ? chipOn : chipStyle}
-                  onClick={() => setAutopilotPickerOpen((prev) => !prev)}
-                  aria-pressed={autopilotPickerOpen}
+                  style={autopilotArmed ? chipOn : chipStyle}
+                  onClick={() => setAutopilotArmed((prev) => !prev)}
+                  aria-pressed={autopilotArmed}
                 >
                   Autopilot
                 </button>
-                {autopilotPickerOpen && (
-                  <>
-                    <button
-                      style={chipGhost}
-                      onClick={() => {
-                        setPreviewDraft(buildAutopilotDraft({ cadenceText: 'Every day at 9:00 AM PT' }));
-                        setAutopilotPickerOpen(false);
-                      }}
-                    >
-                      Daily
-                    </button>
-                    <button
-                      style={chipGhost}
-                      onClick={() => {
-                        setPreviewDraft(buildAutopilotDraft({ cadenceText: 'Every hour' }));
-                        setAutopilotPickerOpen(false);
-                      }}
-                    >
-                      Hourly
-                    </button>
-                    <button
-                      style={chipGhost}
-                      onClick={() => {
-                        setPreviewDraft(buildAutopilotDraft({ cadenceText: 'On trigger (message match)' }));
-                        setAutopilotPickerOpen(false);
-                      }}
-                    >
-                      Trigger
-                    </button>
-                  </>
-                )}
               </div>
 
               <div style={{ position: 'relative' }}>
@@ -743,7 +845,7 @@ export function Composer({ parentId }: ComposerProps) {
                     <button
                       style={linkButtonStyle}
                       onClick={() => {
-                        setPreviewDraft(buildAutopilotDraft());
+                        setAutopilotArmed(true);
                         setToolsOpen(false);
                       }}
                     >
@@ -766,14 +868,6 @@ export function Composer({ parentId }: ComposerProps) {
         )}
       </div>
 
-      {previewDraft && (
-        <AutopilotPreviewSheet
-          draft={previewDraft}
-          onClose={() => {
-            setPreviewDraft(null);
-          }}
-        />
-      )}
     </div>
   );
 }

@@ -39,11 +39,41 @@ body {
   background: var(--muted);
 }
 
+/* Fade scrollbars until pane is hovered/focused */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background-color 160ms ease;
+}
+
+.overflow-y-auto:hover,
+.overflow-y-auto:focus-within {
+  scrollbar-color: var(--border) transparent;
+}
+
+.overflow-y-auto:hover::-webkit-scrollbar-thumb,
+.overflow-y-auto:focus-within::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+.overflow-y-auto:hover::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto:focus-within::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
 /* ─── Placeholders ─── */
 
 textarea::placeholder,
 input::placeholder {
   color: var(--muted);
+}
+
+.sidebar-search::placeholder {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .agent-star-avatar {

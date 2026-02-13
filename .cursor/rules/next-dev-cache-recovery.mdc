@@ -1,0 +1,30 @@
+---
+description: Recover Next.js MODULE_NOT_FOUND cache corruption in dev
+alwaysApply: true
+---
+
+# Next Dev Cache Recovery
+
+When Next.js dev throws errors like `Cannot find module './<chunk>.js'` from `.next/server/webpack-runtime.js`, treat it as corrupted `.next` cache (common in synced folders).
+
+## Required recovery steps
+
+1. Find and kill the process on port `5001`.
+2. Remove `web/.next` completely.
+3. Restart web dev server from `web/` with `npm run dev`.
+4. Verify `http://localhost:5001` returns `200` before saying it is fixed.
+
+## Command sequence
+
+```sh
+lsof -nP -iTCP:5001 -sTCP:LISTEN
+kill <PID>
+rm -rf .next
+npm run dev
+curl -I http://localhost:5001
+```
+
+## Important
+
+- Do this immediately when the module-missing error appears.
+- Do not ask the user to keep retrying before doing the recovery sequence.

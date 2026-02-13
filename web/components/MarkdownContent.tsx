@@ -4,7 +4,8 @@ import { Fragment, useState, type ReactNode } from 'react';
 
 function renderInline(text: string): ReactNode[] {
   const nodes: ReactNode[] = [];
-  const tokenRegex = /(!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)|\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\((https?:\/\/[^)\s]+)\))/g;
+  const tokenRegex =
+    /(!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)|\*\*[^*]+\*\*|__[^_]+__|_[^_]+_|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\((https?:\/\/[^)\s]+)\))/g;
   let cursor = 0;
   let match: RegExpExecArray | null;
   while ((match = tokenRegex.exec(text)) !== null) {
@@ -32,11 +33,23 @@ function renderInline(text: string): ReactNode[] {
       } else {
         nodes.push(token);
       }
-    } else if (token.startsWith('**') && token.endsWith('**')) {
+    } else if (
+      (token.startsWith('**') && token.endsWith('**')) ||
+      (token.startsWith('__') && token.endsWith('__'))
+    ) {
       nodes.push(
         <strong key={`${match.index}-b`} style={{ fontWeight: 700 }}>
           {token.slice(2, -2)}
         </strong>
+      );
+    } else if (
+      (token.startsWith('_') && token.endsWith('_') && token.length > 2) ||
+      (token.startsWith('*') && token.endsWith('*') && token.length > 2)
+    ) {
+      nodes.push(
+        <em key={`${match.index}-i`} style={{ fontStyle: 'italic' }}>
+          {token.slice(1, -1)}
+        </em>
       );
     } else if (token.startsWith('`') && token.endsWith('`')) {
       nodes.push(
@@ -142,14 +155,25 @@ export function MarkdownContent({ markdown }: { markdown: string }) {
       idx += 1;
       continue;
     }
-    const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.+)$/);
+    if (/^(-{3,}|\*{3,})$/.test(line.trim())) {
+      blocks.push(
+        <hr
+          key={`hr-${idx}`}
+          style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }}
+        />
+      );
+      idx += 1;
+      continue;
+    }
+
+    const listMatch = line.match(/^(\s*)([-*]|\d+[.)])\s+(.+)$/);
     if (listMatch) {
-      const ordered = /\d+\./.test(listMatch[2]);
+      const ordered = /\d+[.)]/.test(listMatch[2]);
       const items: string[] = [];
       while (idx < lines.length) {
-        const match = (lines[idx] || '').match(/^(\s*)([-*]|\d+\.)\s+(.+)$/);
+        const match = (lines[idx] || '').match(/^(\s*)([-*]|\d+[.)])\s+(.+)$/);
         if (!match) break;
-        const sameType = ordered ? /\d+\./.test(match[2]) : /[-*]/.test(match[2]);
+        const sameType = ordered ? /\d+[.)]/.test(match[2]) : /[-*]/.test(match[2]);
         if (!sameType) break;
         items.push(match[3]);
         idx += 1;
@@ -237,7 +261,12 @@ export function MarkdownContent({ markdown }: { markdown: string }) {
     const paragraphLines: string[] = [];
     while (idx < lines.length && lines[idx].trim()) {
       const current = lines[idx];
-      if (/^(#{1,3})\s+/.test(current) || /^(\s*)([-*]|\d+\.)\s+/.test(current) || current.trim().startsWith('```')) {
+      if (
+        /^(#{1,3})\s+/.test(current) ||
+        /^(\s*)([-*]|\d+[.)])\s+/.test(current) ||
+        /^(-{3,}|\*{3,})$/.test(current.trim()) ||
+        current.trim().startsWith('```')
+      ) {
         break;
       }
       paragraphLines.push(current);

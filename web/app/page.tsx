@@ -12,6 +12,7 @@ import { DevPanel } from '@/components/DevPanel';
 import { RunsPanel } from '@/components/RunsPanel';
 import { AppHome } from '@/components/AppHome';
 import { RunCanvasPanel } from '@/components/RunCanvasPanel';
+import { RepliesView } from '@/components/RepliesView';
 
 export default function Home() {
   const activeThreadRootId = useStore((s) => s.activeThreadRootId);
@@ -71,30 +72,28 @@ export default function Home() {
         className="flex flex-col items-center shrink-0 select-none"
         style={{
           width: 'var(--rail-w)',
-          background: 'var(--sidebar-bg)',
-          paddingTop: 'var(--s3)',
+          background: 'var(--rail-bg)',
           paddingBottom: 'var(--s3)',
         }}
       >
-        {/* Workspace icon */}
         <div
-          className="flex items-center justify-center text-white font-black"
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(255,255,255,0.22)',
-            fontSize: 'var(--font-large)',
-          }}
+          className="flex items-center justify-center w-full shrink-0"
+          style={{ height: 'var(--topbar-h)' }}
         >
-          A
+          {/* Workspace icon */}
+          <div
+            className="flex items-center justify-center text-white font-black"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(255,255,255,0.22)',
+              fontSize: 'var(--font-large)',
+            }}
+          >
+            A
+          </div>
         </div>
-
-        {/* Divider */}
-        <div
-          className="w-8 my-2"
-          style={{ height: '1px', background: 'rgba(255,255,255,0.15)' }}
-        />
 
         {/* Nav dots (decorative) */}
         {['\uD83D\uDCAC', '\uD83D\uDD14', '\u2026'].map((icon, i) => (
@@ -128,21 +127,9 @@ export default function Home() {
             <Composer />
           </>
         ) : activeView === 'replies' ? (
-          <div className="flex-1 min-w-0" style={{ padding: 'var(--s5)' }}>
-            <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text)' }}>Replies</div>
-            <div style={{ marginTop: 'var(--s2)', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5 }}>
-              This is a placeholder Replies view for the demo UI.
-            </div>
-          </div>
+          <RepliesView />
         ) : activeView === 'runs' ? (
           <RunsPanel />
-        ) : activeView === 'huddles' ? (
-          <div className="flex-1 min-w-0" style={{ padding: 'var(--s5)' }}>
-            <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text)' }}>Huddles</div>
-            <div style={{ marginTop: 'var(--s2)', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5 }}>
-              This is a placeholder Huddles view for the demo UI.
-            </div>
-          </div>
         ) : (
           <AppHome />
         )}
