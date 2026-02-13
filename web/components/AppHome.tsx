@@ -63,26 +63,52 @@ function formatRelativeLastUpdated(ts?: number) {
 function seededAutopilotPreview(autopilotId: string) {
   if (autopilotId === 'autopilot-decision-driver') {
     return [
-      '- Set payout retries to **3** today.',
-      '- Confirm owner for threshold checks.',
-      '- Lock rollback trigger before release gate.',
-      '- Follow-up: run +24h and +48h checkpoints.',
+      '### Decision',
+      'Default payout circuit-breaker retries to **3** today.',
+      '',
+      '### Action items',
+      '- Confirm monitoring owner for threshold checks.',
+      '- Lock rollback trigger before next release gate.',
+      '',
+      '### Follow-up',
+      '- Run checkpoints at +24h and +48h on tail latency and error budget.',
+      '',
+      '### Draft message to post in #eng-platform',
+      '`@Alex Park @Priya Iyer @Mateo Cruz defaulting retries to 3 today. Please confirm threshold owner + rollback trigger in-thread before release gate.`',
     ].join('\n');
   }
   if (autopilotId === 'autopilot-loop-closer') {
     return [
-      '- Close Priya launch copy follow-up.',
-      '- Close Jules Redwood talk-track follow-up.',
-      '- Close Isabel timeline follow-up.',
-      '- Follow-up: confirm all three threads are closed today.',
+      '### Priority follow-ups',
+      '### 1) dm-priya',
+      '- **Draft reply:** `Sharing launch copy now with staged availability language so legal can review on time.`',
+      '',
+      '### 2) dm-jules',
+      '- **Draft reply:** `Sending Redwood talk track now with proof points and concession guardrails for the call.`',
+      '',
+      '### 3) dm-isabel',
+      '- **Draft reply:** `Draft timeline attached with milestones, dependencies, and owners for sponsor review.`',
+      '',
+      '### Follow-up',
+      '- Confirm all three threads are closed before end of day.',
     ].join('\n');
   }
   if (autopilotId === 'autopilot-early-warning') {
     return [
-      '- Retry pressure appears elevated again.',
-      '- Check queue depth, retry rate, and canary latency now.',
-      '- Prep incident + support drafts in case risk rises.',
-      '- Follow-up: open Sev2 if elevated for 2 hours.',
+      '### Risk signal',
+      '- Webhook retry pressure appears to be rising again across ops signals.',
+      '',
+      '### Immediate checks',
+      '- Validate queue depth by shard.',
+      '- Compare retry-storm indicators vs baseline.',
+      '- Confirm canary latency remains within guardrails.',
+      '',
+      '### Follow-up',
+      '- If elevated for 2 hours, open Sev2 and assign incident owner.',
+      '',
+      '### Draft messages',
+      '- **#incident-response:** `Quick validation ask: retry traffic appears elevated again. Who owns next 2h checkpoint and queue-depth snapshot?`',
+      '- **#support-escalations:** `Heads-up: possible retry pressure returning. Please prepare customer-safe macro and ETA language.`',
     ].join('\n');
   }
   return '- No deliverable yet. Refresh to generate a new briefing.';
@@ -133,6 +159,18 @@ export function AppHome() {
         out[message.autopilotId] = { ...out[message.autopilotId], latestDeliverable: message };
       }
     }
+
+    // Backfill from the latest run thread when older messages lack autopilotId.
+    for (const [autopilotId, activity] of Object.entries(out)) {
+      if (activity.latestDeliverable || !activity.latestRun) continue;
+      const fallbackDeliverable = messages
+        .filter((message) => message.kind === 'deliverable' && message.runId === activity.latestRun!.id)
+        .sort((a, b) => b.ts - a.ts)[0];
+      if (fallbackDeliverable) {
+        out[autopilotId] = { ...activity, latestDeliverable: fallbackDeliverable };
+      }
+    }
+
     return out;
   }, [messages, runs]);
   const [creating, setCreating] = useState(false);
@@ -195,7 +233,6 @@ export function AppHome() {
                 autopilotActivity[autopilot.id]?.latestDeliverable?.text ||
                 seededAutopilotPreview(autopilot.id)
               }
-              previewLines={6}
               onOpen={() => {
                 const latestDeliverable = autopilotActivity[autopilot.id]?.latestDeliverable;
                 const canvasTarget = latestDeliverable?.artifactLinks?.find((link) => link.targetId)?.targetId;

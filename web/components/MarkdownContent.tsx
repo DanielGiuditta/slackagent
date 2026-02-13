@@ -156,7 +156,10 @@ export function MarkdownContent({ markdown }: { markdown: string }) {
       }
       blocks.push(
         ordered ? (
-          <ol key={`ol-${idx}`} style={{ margin: '8px 0 8px 20px', paddingLeft: '12px' }}>
+          <ol
+            key={`ol-${idx}`}
+            style={{ margin: '8px 0 8px 20px', paddingLeft: '12px', listStyleType: 'decimal', listStylePosition: 'outside' }}
+          >
             {items.map((item, itemIdx) => (
               <li key={`oli-${idx}-${itemIdx}`} style={{ margin: '4px 0' }}>
                 {renderInline(item)}
@@ -164,7 +167,10 @@ export function MarkdownContent({ markdown }: { markdown: string }) {
             ))}
           </ol>
         ) : (
-          <ul key={`ul-${idx}`} style={{ margin: '8px 0 8px 20px', paddingLeft: '12px' }}>
+          <ul
+            key={`ul-${idx}`}
+            style={{ margin: '8px 0 8px 20px', paddingLeft: '12px', listStyleType: 'disc', listStylePosition: 'outside' }}
+          >
             {items.map((item, itemIdx) => {
               const taskMatch = item.match(/^\[( |x|X)\]\s+(.+)$/);
               if (!taskMatch) {

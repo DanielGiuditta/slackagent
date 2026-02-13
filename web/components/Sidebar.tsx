@@ -1,6 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useStore } from '@/lib/store';
+
+type SidebarViewId = 'replies' | 'runs' | 'app_home' | 'huddles';
 
 export function Sidebar() {
   const channels = useStore((s) => s.channels);
@@ -10,6 +13,13 @@ export function Sidebar() {
   const setActiveView = useStore((s) => s.setActiveView);
   const channelRows = channels.filter((channel) => channel.type !== 'dm');
   const dmRows = channels.filter((channel) => channel.type === 'dm');
+
+  const viewItems: Array<{ id: SidebarViewId; label: string; icon: ReactNode }> = [
+    { id: 'replies', label: 'Replies', icon: <RepliesIcon /> },
+    { id: 'huddles', label: 'Huddles', icon: <HuddlesIcon /> },
+    { id: 'runs', label: 'Runs', icon: '▶' },
+    { id: 'app_home', label: 'Autopilot', icon: '✦' },
+  ];
 
   return (
     <aside
@@ -42,17 +52,13 @@ export function Sidebar() {
           Views
         </div>
 
-        {[
-          { id: 'channel', label: 'Channels', icon: '#' },
-          { id: 'runs', label: 'Runs', icon: '▶' },
-          { id: 'app_home', label: 'Autopilot', icon: '✦' },
-        ].map((item) => {
+        {viewItems.map((item) => {
           const isActive = activeView === item.id;
           return (
             <button
               key={item.id}
               type="button"
-              onClick={() => setActiveView(item.id as 'channel' | 'runs' | 'app_home')}
+              onClick={() => setActiveView(item.id)}
               className="w-full text-left rounded flex items-center gap-2 transition-colors"
               style={{
                 padding: 'var(--s1) var(--s2)',
@@ -63,7 +69,15 @@ export function Sidebar() {
                 borderRadius: 'var(--radius-sm)',
               }}
             >
-              <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 'var(--font-small)' }}>
+              <span
+                style={{
+                  color: 'rgba(255,255,255,0.45)',
+                  fontSize: 'var(--font-small)',
+                  display: 'inline-flex',
+                  lineHeight: 0,
+                }}
+                aria-hidden="true"
+              >
                 {item.icon}
               </span>
               {item.label}
@@ -85,7 +99,7 @@ export function Sidebar() {
         </div>
 
         {channelRows.map((ch) => {
-          const isActive = activeChannelId === ch.id;
+          const isActive = activeView === 'channel' && activeChannelId === ch.id;
           return (
             <button
               key={ch.id}
@@ -129,7 +143,7 @@ export function Sidebar() {
         </div>
 
         {dmRows.map((dm) => {
-          const isActive = activeChannelId === dm.id;
+          const isActive = activeView === 'channel' && activeChannelId === dm.id;
           return (
             <button
               key={dm.id}
@@ -161,5 +175,45 @@ export function Sidebar() {
         })}
       </nav>
     </aside>
+  );
+}
+
+function RepliesIcon() {
+  return (
+    <svg
+      width="1em"
+      height="1em"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4.5 4.5h11A2.5 2.5 0 0 1 18 7v5a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3v-3H4.5A2.5 2.5 0 0 1 2 12V7a2.5 2.5 0 0 1 2.5-2.5Z" />
+      <path d="M7.5 9h5" />
+      <path d="M11.5 7.5 13 9l-1.5 1.5" />
+    </svg>
+  );
+}
+
+function HuddlesIcon() {
+  return (
+    <svg
+      width="1em"
+      height="1em"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5.5 10V9.25a4.5 4.5 0 0 1 9 0V10" />
+      <path d="M4.5 10.25a1.6 1.6 0 0 1 3.2 0v3.25a1.6 1.6 0 0 1-3.2 0v-3.25Z" />
+      <path d="M12.3 10.25a1.6 1.6 0 0 1 3.2 0v3.25a1.6 1.6 0 0 1-3.2 0v-3.25Z" />
+    </svg>
   );
 }

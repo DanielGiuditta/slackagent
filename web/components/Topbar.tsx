@@ -12,9 +12,13 @@ export function Topbar() {
       ? channel?.type === 'dm'
         ? channel.name
         : `#${activeChannelId}`
+      : activeView === 'replies'
+        ? 'Replies'
       : activeView === 'runs'
         ? 'Runs'
-        : '✦ Autopilot';
+        : activeView === 'huddles'
+          ? 'Huddles'
+          : '✦ Autopilot';
 
   return (
     <header

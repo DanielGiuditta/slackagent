@@ -14,7 +14,7 @@ import type {
   UserProfile,
 } from './types';
 
-type ViewMode = 'channel' | 'runs' | 'app_home';
+type ViewMode = 'channel' | 'replies' | 'runs' | 'app_home' | 'huddles';
 
 interface SlackStore {
   /* ─── State ─── */

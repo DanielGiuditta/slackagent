@@ -127,8 +127,22 @@ export default function Home() {
             <MessageList />
             <Composer />
           </>
+        ) : activeView === 'replies' ? (
+          <div className="flex-1 min-w-0" style={{ padding: 'var(--s5)' }}>
+            <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text)' }}>Replies</div>
+            <div style={{ marginTop: 'var(--s2)', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5 }}>
+              This is a placeholder Replies view for the demo UI.
+            </div>
+          </div>
         ) : activeView === 'runs' ? (
           <RunsPanel />
+        ) : activeView === 'huddles' ? (
+          <div className="flex-1 min-w-0" style={{ padding: 'var(--s5)' }}>
+            <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text)' }}>Huddles</div>
+            <div style={{ marginTop: 'var(--s2)', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5 }}>
+              This is a placeholder Huddles view for the demo UI.
+            </div>
+          </div>
         ) : (
           <AppHome />
         )}
