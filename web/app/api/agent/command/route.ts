@@ -126,11 +126,11 @@ export async function POST(request: NextRequest) {
     }
 
     const client = new OpenAI({ apiKey });
-    const model = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
-    const response = await client.responses.create({
+    const response = await client.chat.completions.create({
       model,
-      input: [
+      messages: [
         { role: 'system', content: RUN_SIMULATION_PROMPT },
         {
           role: 'user',
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       temperature: 0.4,
     });
 
-    const output = response.output_text?.trim() || '';
+    const output = response.choices[0]?.message?.content?.trim() || '';
     const parsed = parseJSON(output);
 
     const plan = parsed || createFallbackPlan(command);

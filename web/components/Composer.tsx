@@ -19,6 +19,8 @@ interface MentionOption {
   invokesAgent?: boolean;
 }
 
+const AGENT_AVATAR_SRC = '/avatars/workspace-agent.png';
+
 function startsWithAgentAddressing(input: string) {
   return /^(@(agent|workspaceagent|workspace-agent)\b|\/agent\b|\/autopilot\b)/i.test(input.trim());
 }
@@ -231,7 +233,7 @@ export function Composer({ parentId }: ComposerProps) {
         label: 'Agent',
         subtitle: 'AI Teammate',
         token: '@agent',
-        avatarUrl: users['workspace-agent']?.avatarUrl,
+        avatarUrl: users['workspace-agent']?.avatarUrl || AGENT_AVATAR_SRC,
         icon: '✦',
         invokesAgent: true,
       },
