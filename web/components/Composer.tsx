@@ -19,7 +19,7 @@ interface MentionOption {
   invokesAgent?: boolean;
 }
 
-const AGENT_AVATAR_SRC = '/avatars/workspace-agent.png';
+const AGENT_AVATAR_SRC = '/avatars/workspace-agent.svg';
 
 function startsWithAgentAddressing(input: string) {
   return /^(@(agent|workspaceagent|workspace-agent)\b|\/agent\b|\/autopilot\b)/i.test(input.trim());
@@ -652,7 +652,19 @@ export function Composer({ parentId }: ComposerProps) {
                 }}
               >
                 <div className="flex items-center gap-2">
-                  {option.avatarUrl ? (
+                  {option.id === 'workspace-agent' ? (
+                    <div
+                      aria-hidden="true"
+                      className="agent-star-avatar"
+                      style={{ width: '24px', height: '24px', borderRadius: '6px' }}
+                    >
+                      <div className="agent-star-avatar__blue" />
+                      <div className="agent-star-avatar__rainbow" />
+                      <span className="agent-star-avatar__glyph" style={{ fontSize: '16px' }}>
+                        ✦
+                      </span>
+                    </div>
+                  ) : option.avatarUrl ? (
                     <img
                       src={option.avatarUrl}
                       alt={option.label}

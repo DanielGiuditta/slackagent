@@ -98,7 +98,7 @@ const seedUsers: Record<string, UserProfile> = {
     id: 'workspace-agent',
     displayName: 'Agent',
     role: 'AI Teammate',
-    avatarUrl: '/avatars/workspace-agent.png',
+    avatarUrl: '/avatars/workspace-agent.svg',
     isBot: true,
   },
   'ops-bot': { id: 'ops-bot', displayName: 'OpsBot', role: 'Reliability Bot', avatarUrl: '/avatars/ops-bot.png', isBot: true },
